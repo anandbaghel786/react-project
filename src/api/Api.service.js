@@ -10,7 +10,7 @@ const apiService = {
         .then(response => response)
         .catch(error => {
           console.error(error);
-          throw Error(error);
+          throw Error(error); 
         });
     },
     httpPost: async (endpoint, data) => {
