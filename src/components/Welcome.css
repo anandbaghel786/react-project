@@ -1,0 +1,21 @@
+.ul-align {
+    display: flex;
+    list-style: none;
+    background: yellow;
+    padding: 1rem;
+}
+
+.ul-align li {
+    margin-left: 2rem;
+}
+
+.btn-circle {
+    background: black;
+    color: white;
+    border-radius: 50%;
+    margin-top: 2rem;
+  }
+
+  .btn:hover {
+    color: #4993dc;
+  }
