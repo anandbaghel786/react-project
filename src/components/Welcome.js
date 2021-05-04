@@ -16,7 +16,7 @@ class Welcome extends Component {
         super();
         this.state = { 
             data:[], 
-            formData: { id: 100, name: "", email: "", age: "", gender: 'Male', skills: [{ ...skill }] }, errors: { name: '', email: '' },
+            formData: { id: 100, name: "", email: "", age: "", gender: '', skills: [{ ...skill }] }, errors: { name: '', email: '', age: '', gender: '' },
             index: null,
             isEditMode: false
         };
@@ -88,6 +88,7 @@ class Welcome extends Component {
             default:
                 break;
         }
+        this.validate(e);
     }
 
     setGender = (e) => {
@@ -109,6 +110,7 @@ class Welcome extends Component {
     }
 
     validate = (e) => {
+        console.log(e);
         if (e.target.name ==='name') {
             if (e.target.value) {
                 this.setState(prevState => ({
@@ -117,6 +119,26 @@ class Welcome extends Component {
             } else {
                 this.setState(prevState => ({
                     errors: { ...prevState.errors, name: 'Name is required.' },
+                }));
+            }
+        }  else if (e.target.name === 'age') {
+            if (e.target.value) {
+                this.setState(prevState => ({
+                    errors: { ...prevState.errors, age: '' },
+                }));
+            } else {
+                this.setState(prevState => ({
+                    errors: { ...prevState.errors, age: 'Age is required.' },
+                }));
+            }
+        }  else if (e.target.name === 'gender') {
+            if (e.target.value) {
+                this.setState(prevState => ({
+                    errors: { ...prevState.errors, gender: '' },
+                }));
+            } else {
+                this.setState(prevState => ({
+                    errors: { ...prevState.errors, gender: 'Gender is required.' },
                 }));
             }
         } else if (e.target.name === 'email') {
@@ -187,6 +209,10 @@ class Welcome extends Component {
         this.setState({data: this.state.data});
     }
 
+    validate1 = () => {
+        console.log("Hi");
+    }
+
     render() {
         return <div>
 
@@ -206,6 +232,7 @@ class Welcome extends Component {
                                     <Form.Group controlId="age">
                                         <Form.Label>Age</Form.Label>
                                         <Form.Control name="age" minLength="2" maxLength="2" type="text" value={this.state.formData.age} onChange={this.onChange, this.setValue} placeholder="Enter age"></Form.Control>
+                                        {this.state.errors["age"] ? <span style={{ color: "red" }}>{this.state.errors["age"]}</span> : null}
                                     </Form.Group>
                                 </Col>
                             </Row>
@@ -218,12 +245,13 @@ class Welcome extends Component {
                                             <option value="Male">Male</option>
                                             <option value="Female">Female</option>
                                         </Form.Control>
+                                        {this.state.errors["gender"] ? <span style={{ color: "red" }}>{this.state.errors["gender"]}</span> : null}
                                     </Form.Group>
                                 </Col>
                                 <Col>
                                     <Form.Group controlId="email">
                                         <Form.Label>Email</Form.Label>
-                                        <Form.Control type="email" name="email" onChange={this.setValue} value={this.state.formData.email} placeholder="Enter email"></Form.Control>
+                                        <Form.Control type="email" name="email" onChange={this.validate, this.setValue} value={this.state.formData.email} placeholder="Enter email"></Form.Control>
                                         {this.state.errors["email"] ? <span style={{ color: "red" }}>{this.state.errors["email"]}</span> : null}
                                     </Form.Group>
                                 </Col>
