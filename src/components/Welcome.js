@@ -4,6 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './Welcome.css';
 import { faHome } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import  dataService  from '../_services/_dataService';
 
 const skill = {
     id: 1,
@@ -18,6 +19,7 @@ class Welcome extends Component {
             data:[], 
             formData: { id: 100, name: "", email: "", age: "", gender: '', skills: [{ ...skill }] }, errors: { name: '', email: '', age: '', gender: '' },
             index: null,
+            skillIndex: null,
             isEditMode: false
         };
         this.onChange = this.onChange.bind(this)
@@ -31,6 +33,18 @@ class Welcome extends Component {
                 data: storeData
             })
         }
+
+        this.subscription = dataService.getDatasource().subscribe(message => {
+            if (message) {
+                // console.log(message);
+                console.log(message.datasource);
+                // add message to local state if not empty
+                // this.setState({ messages: [...this.state.messages, message] });
+            } else {
+                // clear messages when empty message received
+                // this.setState({ messages: [] });
+            }
+        });
     }
     
     
@@ -105,12 +119,16 @@ class Welcome extends Component {
         }
     }
 
-    validateEmail(e) {
-
-    }
-
     validate = (e) => {
-        console.log(e);
+        // let field = e.target.name;
+        // let index = 0;
+        // if (field.includes('skill') || field.includes('exp')) {
+        //     index = field.includes('skill') ? field.slice(5) : field.slice(3);
+        //     field = field.includes('skill') ? field.slice(0, 5) : field.slice(0, 3);
+        // }
+
+        console.log(e.target.value);
+
         if (e.target.name ==='name') {
             if (e.target.value) {
                 this.setState(prevState => ({
@@ -151,7 +169,18 @@ class Welcome extends Component {
                     errors: { ...prevState.errors, email: 'Email is required.' },
                 }));
             }
-        }
+        } 
+        // else if (e.target.name === 'skill') {
+        //     if (e.target.value) {
+        //         this.setState(prevState => ({
+        //             errors: { ...prevState.errors, skill: '' },
+        //         }));
+        //     } else {
+        //         this.setState(prevState => ({
+        //             errors: { ...prevState.errors, skill: 'Skill is required.' },
+        //         }));
+        //     }
+        // }
     }
 
     addItem = (e) => {
@@ -193,14 +222,15 @@ class Welcome extends Component {
         
     }
 
-    editData = (index) => {
+    editData = (e, index) => {
         this.setState({
             formData: this.state.data[index],
             index: index,
             isEditMode: true
         }, () => {
             console.log(this.state.formData);
-        })        
+        })  
+        this.validate(e)      
     }
 
     removeRow = (id) => {
@@ -209,8 +239,10 @@ class Welcome extends Component {
         this.setState({data: this.state.data});
     }
 
-    validate1 = () => {
-        console.log("Hi");
+    getSkillRowIndex = (e, i) => {
+        this.setState({
+            skillIndex: i
+        })
     }
 
     render() {
@@ -265,11 +297,12 @@ class Welcome extends Component {
                                                 <Col md={5}>
                                                     <Form.Group>
                                                         <Form.Label>Skill Name</Form.Label>
-                                                        <Form.Control as="select" type="exskillp" id={"skill" + index1} name={"skill" + index1} value={skill.skill} placeholder="Enter skill" onChange={this.setValue}>
+                                                        <Form.Control as="select" type="exskillp" id={"skill" + index1} name={"skill" + index1} value={skill.skill} placeholder="Enter skill" onChange={this.setValue} onFocus={(e) => this.getSkillRowIndex(e, index1)}>
                                                             <option value="">Select</option>
                                                             <option value="angular">Angular</option>
                                                             <option value="javascript">Javascript</option>
                                                         </Form.Control>
+                                                        {this.state.errors["skill"] && index1==this.state.skillIndex ? <span style={{ color: "red" }}>{this.state.errors["skill"]}</span> : null}
                                                     </Form.Group>
                                                 </Col>
                                                 <Col md={5}>
@@ -300,8 +333,8 @@ class Welcome extends Component {
                         </Form>
                     </Col>
                     <Col style={{ padding: '1rem', border: "2px solid grey" }}>
-                        <Table responsive variant="dark">
-                            <thead style={{background: 'rgb(38 115 118)'}}>
+                        <Table responsive variant="dark" style={{borderRadius: '20px'}}>
+                            <thead style={{background: 'rgb(38 115 118)', borderRadius: '20px !important'}}>
                                 <tr>
                                     <th>Name</th>
                                     <th>Age</th>
@@ -324,7 +357,7 @@ class Welcome extends Component {
                                                 )}
                                                 </td>
                                                 <td>
-                                                <button type="button" style={{color: 'white'}} className="btn" onClick={() => this.editData(index)}><i className="fas fa-edit"></i></button>
+                                                <button type="button" style={{color: 'white'}} className="btn" onClick={(e) => this.editData(e, index)}><i className="fas fa-edit"></i></button>
                                                 <button type="button" style={{color: 'white'}} className="btn ml-2" onClick={() => this.removeRow(index)}><i className="fas fa-trash"></i></button>
                                                 </td>
                                             </tr>

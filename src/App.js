@@ -1,13 +1,22 @@
 import './App.css';
 import { Greet } from './components/Greet';
 import Welcome from './components/Welcome';
-import './components/Welcome.css'
+import './components/Welcome.css';
+import Hello from './components/Hello';
+import Switch from "react-switch";
 
-import { BrowserRouter as Router, Switch, Route, NavLink} from "react-router-dom";
+import { BrowserRouter as Router, Route, NavLink } from "react-router-dom";
+ 
 
- function App  ()   {
- const handleToggle = () => {}
- const props = {name: "Harish"};
+
+
+
+function App() {
+  const onChange = (e) => {
+    console.log(e.target.value);
+    }
+  const handleToggle = () => { }
+  const props = { name: "Harish" };
   return (
     <div className="App">
       {/* <Greet /> */}
@@ -17,23 +26,27 @@ import { BrowserRouter as Router, Switch, Route, NavLink} from "react-router-dom
           <nav>
             <ul className="ul-align">
               <li>
-                <NavLink exact to="/" activeStyle={{ color: 'red', padding: '5px', background: 'black', borderRadius: '10%'}} >Home</NavLink>
+                <NavLink exact to="/" activeStyle={{ color: 'red', padding: '5px', background: 'black', borderRadius: '10%' }} >Home</NavLink>
               </li>
               <li>
-                <NavLink exact to="/greet" activeStyle={{ color: 'white', padding: '5px', background: 'black',
-    borderRadius: '10%' }}>Greet</NavLink>
+                <NavLink exact to="/greet" activeStyle={{
+                  color: 'white', padding: '5px', background: 'black',
+                  borderRadius: '10%'
+                }}>Greet</NavLink>
               </li>
               <li>
-                <NavLink exact to={{pathname: "/welcome", state: { isAdmin:true }}} activeStyle={{ color: 'white', padding: '5px', background: 'black', borderRadius: '10%' }}>Welcome</NavLink>
-              </li>
+                <NavLink exact to={{ pathname: "/welcome", state: { isAdmin: true } }} activeStyle={{ color: 'white', padding: '5px', background: 'black', borderRadius: '10%' }}>Welcome</NavLink>
+              </li>                   
+            {/* <Hello />    */}
             </ul>
           </nav>
+          
 
           {/* A <Switch> looks through its children <Route>s and
             renders the first one that matches the current URL. */}
-          <Switch>
+          {/* <Switch> */}
             <Route path="/greet">
-              <Greet objName={props.name}  bool={true} handle={() => handleToggle()} />
+              <Greet objName={props.name} bool={true} handle={() => handleToggle()} />
             </Route>
             <Route path="/welcome">
               <Welcome />
@@ -41,7 +54,7 @@ import { BrowserRouter as Router, Switch, Route, NavLink} from "react-router-dom
             {/* <Route path="/">
             <Home />
           </Route> */}
-          </Switch>
+          {/* </Switch> */}
         </div>
       </Router>
     </div>

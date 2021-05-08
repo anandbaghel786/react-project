@@ -1,10 +1,10 @@
 const apiService = {
     config: {
-      api: "https://jsonplaceholder.typicode.com"
+      api: "http://localhost:8080/v1/"
     },
     httpGet: async endpoint => {
       return fetch(`${apiService.config.api}${endpoint}`, {
-        headers: { "content-type": "application/json" }
+        headers: header()
       })
         .then(response => handleResponse(response))
         .then(response => response)
@@ -17,7 +17,7 @@ const apiService = {
       return fetch(`${apiService.config.api}${endpoint}`, {
         method: "post",
         body: data ? JSON.stringify(data) : null,
-        headers: { "content-type": "application/json" }
+        headers: header()
       })
         .then(response => handleResponse(response))
         .then(response => response)
@@ -30,7 +30,7 @@ const apiService = {
       return fetch(`${apiService.config.api}${endpoint}`, {
         method: "put",
         body: data ? JSON.stringify(data) : null,
-        headers: { "content-type": "application/json" }
+        headers: header()
       })
         .then(response => handleResponse(response))
         .then(response => response)
@@ -42,7 +42,7 @@ const apiService = {
     httpDelete: async (endpoint, data) => {
       return fetch(`${apiService.config.api}${endpoint}`, {
         method: "delete",
-        headers: { "content-type": "application/json" }
+        headers: header()
       })
         .then(response => handleResponse(response))
         .then(response => response)
@@ -62,6 +62,10 @@ const apiService = {
       throw Error( response.json()| "error");
     }
   };
+
+  const header = () => {
+    return { "content-type": "application/json" };
+  }
   
   export default apiService;
   
