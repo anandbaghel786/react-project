@@ -1,5 +1,6 @@
 import './App.css';
 import { Greet } from './components/Greet';
+import { Home } from './components/Home';
 import Welcome from './components/Welcome';
 import './components/Welcome.css';
 import Hello from './components/Hello';
@@ -37,7 +38,7 @@ function App() {
               <li>
                 <NavLink exact to={{ pathname: "/welcome", state: { isAdmin: true } }} activeStyle={{ color: 'white', padding: '5px', background: 'black', borderRadius: '10%' }}>Welcome</NavLink>
               </li>                   
-            {/* <Hello />    */}
+            <Hello />   
             </ul>
           </nav>
           
@@ -51,9 +52,9 @@ function App() {
             <Route path="/welcome">
               <Welcome />
             </Route>
-            {/* <Route path="/">
+            <Route exact path="/">
             <Home />
-          </Route> */}
+          </Route>
           {/* </Switch> */}
         </div>
       </Router>

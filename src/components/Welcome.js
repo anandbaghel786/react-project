@@ -4,7 +4,10 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './Welcome.css';
 import { faHome } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import  dataService  from '../_services/_dataService';
+import dataService from '../_services/_dataService';
+import apiService from '../api/Api.service';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const skill = {
     id: 1,
@@ -15,9 +18,9 @@ const skill = {
 class Welcome extends Component {
     constructor() {
         super();
-        this.state = { 
-            data:[], 
-            formData: { id: 100, name: "", email: "", age: "", gender: '', skills: [{ ...skill }] }, errors: { name: '', email: '', age: '', gender: '' },
+        this.state = {
+            data: [],
+            formData: { localId: 100, _id: '', sqlId: 0, name: "", email: "", age: "", gender: '', skills: [{ ...skill }] }, errors: { name: '', email: '', age: '', gender: '' },
             index: null,
             skillIndex: null,
             isEditMode: false
@@ -27,27 +30,26 @@ class Welcome extends Component {
     }
 
     componentDidMount() {
-        let storeData = JSON.parse(localStorage.getItem("data"));
-        if(localStorage.getItem("data")) {
-            this.setState({
-                data: storeData
-            })
-        }
+
+        this.getUsers();
 
         this.subscription = dataService.getDatasource().subscribe(message => {
             if (message) {
-                // console.log(message);
                 console.log(message.datasource);
-                // add message to local state if not empty
-                // this.setState({ messages: [...this.state.messages, message] });
-            } else {
-                // clear messages when empty message received
-                // this.setState({ messages: [] });
             }
         });
     }
-    
-    
+
+    getUsers = () => {
+        apiService.httpGet("/users").then(res => {
+            console.log(res);
+            this.setState({
+                data: res.data && res.data.length > 0 ? res.data : []
+            })
+        })
+    }
+
+
     setValue = (e) => {
         let field = e.target.name;
         let index = 0;
@@ -82,12 +84,12 @@ class Welcome extends Component {
                 break;
 
             case 'skill':
-                const skills = [...this.state.formData.skills];
+                let skills = [...this.state.formData.skills];
                 skills[index].skill = e.target.value;
 
                 var formData = { ...this.state.formData };
-        formData.skills[index] = skills[index];
-        this.setState({formData})
+                formData.skills[index] = skills[index];
+                this.setState({ formData })
                 break;
 
             case 'exp':
@@ -95,8 +97,8 @@ class Welcome extends Component {
                 exps[index].exp = e.target.value;
 
                 formData = { ...this.state.formData };
-        formData.skills[index] = exps[index];
-        this.setState({formData})
+                formData.skills[index] = exps[index];
+                this.setState({ formData })
                 break;
 
             default:
@@ -127,9 +129,7 @@ class Welcome extends Component {
         //     field = field.includes('skill') ? field.slice(0, 5) : field.slice(0, 3);
         // }
 
-        console.log(e.target.value);
-
-        if (e.target.name ==='name') {
+        if (e.target.name === 'name') {
             if (e.target.value) {
                 this.setState(prevState => ({
                     errors: { ...prevState.errors, name: '' },
@@ -139,7 +139,7 @@ class Welcome extends Component {
                     errors: { ...prevState.errors, name: 'Name is required.' },
                 }));
             }
-        }  else if (e.target.name === 'age') {
+        } else if (e.target.name === 'age') {
             if (e.target.value) {
                 this.setState(prevState => ({
                     errors: { ...prevState.errors, age: '' },
@@ -149,7 +149,7 @@ class Welcome extends Component {
                     errors: { ...prevState.errors, age: 'Age is required.' },
                 }));
             }
-        }  else if (e.target.name === 'gender') {
+        } else if (e.target.name === 'gender') {
             if (e.target.value) {
                 this.setState(prevState => ({
                     errors: { ...prevState.errors, gender: '' },
@@ -169,7 +169,7 @@ class Welcome extends Component {
                     errors: { ...prevState.errors, email: 'Email is required.' },
                 }));
             }
-        } 
+        }
         // else if (e.target.name === 'skill') {
         //     if (e.target.value) {
         //         this.setState(prevState => ({
@@ -184,9 +184,9 @@ class Welcome extends Component {
     }
 
     addItem = (e) => {
-        skill.id = this.state.formData.skills[this.state.formData.skills.length-1].id++;
+        skill.localId = this.state.formData.skills[this.state.formData.skills.length - 1].localId++;
         this.setState(prevState => ({
-            formData: { ...prevState.formData, skills: [...prevState.formData.skills, { ...skill }]},
+            formData: { ...prevState.formData, skills: [...prevState.formData.skills, { ...skill }] },
         }));
     }
 
@@ -198,45 +198,76 @@ class Welcome extends Component {
     }
 
     submit = (e, index) => {
-        let obj = this.state.data.find(e => e.id===this.state.formData.id);
+        let obj = this.state.data.find(e => e.localId === this.state.formData.localId);
 
-        if(obj) {
+        if (obj) {
             var mydata = this.state.data;
             mydata[this.state.index] = this.state.formData;
             this.setState({
                 data: mydata
             }, () => {
-            localStorage.setItem("data", JSON.stringify(this.state.data));
+                localStorage.setItem("data", JSON.stringify(this.state.data));
             })
         } else {
             var add = { ...this.state.formData };
-            add.id = this.state.formData.id++;
-            this.setState({add});
-            this.state.data.push(Object.assign({}, this.state.formData));
+            // add.localId = this.state.data[this.state.data.length-1].localId+1;
+            console.log();
+            this.setState({ add });
+            this.state.data.push(Object.assign({}, add));
         }
-        this.setState( {
-            data: this.state.data
-        }, () => {
-        localStorage.setItem("data", JSON.stringify(this.state.data));
-        })
-        
+
+        apiService.httpPost("/users/saveUser", this.state.formData).then(res => {
+            // let formData = {...this.state.formData}
+            // formData._id = res.data._id;
+            // this.setState({ formData });
+            console.log(this.state.formData);
+            this.setState({
+                data: this.state.data
+            }, () => {
+                localStorage.setItem("data", JSON.stringify(this.state.data));
+            })
+    
+            toast.success("User saved successfully.");
+        });
+
     }
 
-    editData = (e, index) => {
+    editData = (evt, item, index) => {
+        // By localstorage
+        // this.setState({
+        //     formData: this.state.data[index],
+        //     index: index,
+        //     isEditMode: true
+        // }, () => {
+        //     console.log(this.state.formData);
+        // })
+
+        //By item _id from html
+        console.log(item);
         this.setState({
-            formData: this.state.data[index],
+            formData: {...item},
             index: index,
             isEditMode: true
         }, () => {
             console.log(this.state.formData);
-        })  
-        this.validate(e)      
+        })
+
+        this.validate(evt)
     }
 
     removeRow = (id) => {
         this.state.data.splice(id, 1);
         localStorage.setItem("data", JSON.stringify(this.state.data));
-        this.setState({data: this.state.data});
+        this.setState({ data: this.state.data });
+        apiService.httpDelete("/users/deleteUser").then(async (res) => {
+            console.log(res);
+            let result = res;
+            console.log(res);
+            let dat = await this.getUsers();
+            // this.setState({
+            //     data: result.data
+            // })
+        })
     }
 
     getSkillRowIndex = (e, i) => {
@@ -289,7 +320,7 @@ class Welcome extends Component {
                                 </Col>
                             </Row>
                             <Row>
-                                <Col style={{padding: '24px', border: '3px solid #e2e2f1', margin: '14px'}}>
+                                <Col style={{ padding: '24px', border: '3px solid #e2e2f1', margin: '14px' }}>
                                     <Form.Label style={{ fontWeight: 'bold', textDecoration: 'underline' }}>Add Skill:</Form.Label>
                                     {this.state.formData.skills.map((skill, index1) => {
                                         return (
@@ -302,7 +333,7 @@ class Welcome extends Component {
                                                             <option value="angular">Angular</option>
                                                             <option value="javascript">Javascript</option>
                                                         </Form.Control>
-                                                        {this.state.errors["skill"] && index1==this.state.skillIndex ? <span style={{ color: "red" }}>{this.state.errors["skill"]}</span> : null}
+                                                        {this.state.errors["skill"] && index1 == this.state.skillIndex ? <span style={{ color: "red" }}>{this.state.errors["skill"]}</span> : null}
                                                     </Form.Group>
                                                 </Col>
                                                 <Col md={5}>
@@ -313,9 +344,9 @@ class Welcome extends Component {
                                                     </Form.Group>
                                                 </Col>
                                                 <Col md={2} style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
-                                                { this.state.formData.skills.length > 1 ? <button type="button" className="btn btn-circle" onClick={this.removeItem}><i className="fas fa-minus"></i></button> : null }
+                                                    {this.state.formData.skills.length > 1 ? <button type="button" className="btn btn-circle" onClick={this.removeItem}><i className="fas fa-minus"></i></button> : null}
 
-                                                    { this.state.formData.skills.length-1 <= index1 ? <button type="button" className="btn btn-circle ml-2" onClick={this.addItem}><i className="fas fa-plus"></i></button> : null }
+                                                    {this.state.formData.skills.length - 1 <= index1 ? <button type="button" className="btn btn-circle ml-2" onClick={this.addItem}><i className="fas fa-plus"></i></button> : null}
 
                                                     {/* <FontAwesomeIcon icon={faHome} /> */}
                                                 </Col>
@@ -327,14 +358,14 @@ class Welcome extends Component {
                             </Row>
                             <Row>
                                 <Col>
-                                    <button type="button" onClick={(e) => this.submit(e)} className="btn btn-primary"> {this.state.isEditMode ? 'Update' : 'Submit' }</button>
+                                    <button type="button" onClick={(e) => this.submit(e)} className="btn btn-primary"> {this.state.isEditMode ? 'Update' : 'Submit'}</button>
                                 </Col>
                             </Row>
                         </Form>
                     </Col>
                     <Col style={{ padding: '1rem', border: "2px solid grey" }}>
-                        <Table responsive variant="dark" style={{borderRadius: '20px'}}>
-                            <thead style={{background: 'rgb(38 115 118)', borderRadius: '20px !important'}}>
+                        <Table responsive variant="dark" style={{ borderRadius: '20px' }}>
+                            <thead style={{ background: 'rgb(38 115 118)', borderRadius: '20px !important' }}>
                                 <tr>
                                     <th>Name</th>
                                     <th>Age</th>
@@ -345,28 +376,29 @@ class Welcome extends Component {
                                 </tr>
                             </thead>
                             <tbody>
-                                   { this.state.data?.map((e, index) =>
-                                            <tr  key={index}>
-                                                <td>{e.name}</td>
-                                                <td>{e.age}</td>
-                                                <td>{e.gender}</td>
-                                                <td>{e.email}</td>
-                                                <td>
-                                                { e.skills?.map((e1, index) =>
-                                                    <span   key={index}>{e1.skill}  {e1.exp} <br></br></span>
-                                                )}
-                                                </td>
-                                                <td>
-                                                <button type="button" style={{color: 'white'}} className="btn" onClick={(e) => this.editData(e, index)}><i className="fas fa-edit"></i></button>
-                                                <button type="button" style={{color: 'white'}} className="btn ml-2" onClick={() => this.removeRow(index)}><i className="fas fa-trash"></i></button>
-                                                </td>
-                                            </tr>
-                                   )}
+                                {this.state.data?.map((e, index) =>
+                                    <tr key={index}>
+                                        <td>{e.name}</td>
+                                        <td>{e.age}</td>
+                                        <td>{e.gender}</td>
+                                        <td>{e.email}</td>
+                                        <td>
+                                            {e.skills?.map((e1, index) =>
+                                                <span key={index}>{e1.skill}  {e1.exp} <br></br></span>
+                                            )}
+                                        </td>
+                                        <td>
+                                            <button type="button" style={{ color: 'white' }} className="btn" onClick={(evt) => this.editData(evt, e, index)}><i className="fas fa-edit"></i></button>
+                                            <button type="button" style={{ color: 'white' }} className="btn ml-2" onClick={() => this.removeRow(index)}><i className="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                )}
                             </tbody>
                         </Table>
                     </Col>
                 </Row>
             </Container>
+            <ToastContainer pauseOnFocusLoss={false} />
         </div>
     }
 }

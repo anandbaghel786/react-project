@@ -1,5 +1,9 @@
 import React, { Component } from "react";
 import Switch from "react-switch";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import apiService from "../api/Api.service";
+
 import dataService from '../_services/_dataService';
 
 class Hello extends Component {
@@ -9,11 +13,17 @@ class Hello extends Component {
         this.handleChange = this.handleChange.bind(this);
     }
 
+    componentDidMount() {
+        apiService.httpGet(`/db/${dataService.getDb()}`);
+    }
+
     handleChange(checked) {
         this.setState({
             checked
         }, () => {
             dataService.setDatasource(checked);
+            apiService.httpGet(`/db/${dataService.getDb()}`);
+            toast.success(this.state.checked ? "MongoDB selected as database." : "MySQL selected as database.");
         });
     }
 
@@ -26,6 +36,7 @@ class Hello extends Component {
                         checkedIcon={false} />
                 </label>
                 <label className="ml-1" style={{ fontWeight: this.state.checked ? 'bold' : null }}>Mongo</label>
+                <ToastContainer pauseOnFocusLoss={false} />
             </span>
         );
     }

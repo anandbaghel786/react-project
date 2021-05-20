@@ -1,6 +1,9 @@
+import dataService from "../_services/_dataService";
+
+
 const apiService = {
     config: {
-      api: "http://localhost:8080/v1/"
+      api: "http://localhost:5000/v1"
     },
     httpGet: async endpoint => {
       return fetch(`${apiService.config.api}${endpoint}`, {
