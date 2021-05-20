@@ -30,12 +30,12 @@ class Hello extends Component {
     render() {
         return (
             <span className="switch-pos">
-                <label className="mr-2" style={{ fontWeight: this.state.checked ? null : 'bold' }}>MySQL</label>
+                <label className="mr-2" style={{ fontWeight: this.state.checked ? null : 'bold' }}>MySQL will be available as DB in future</label>
                 <label>
-                    <Switch onChange={this.handleChange} checked={this.state.checked} uncheckedIcon={false}
+                    <Switch disabled onChange={this.handleChange} checked={this.state.checked} uncheckedIcon={false}
                         checkedIcon={false} />
                 </label>
-                <label className="ml-1" style={{ fontWeight: this.state.checked ? 'bold' : null }}>Mongo</label>
+                <label className="ml-1" style={{ fontWeight: this.state.checked ? 'bold' : null }}>Mongo is running as DB by default in backend.</label>
                 <ToastContainer pauseOnFocusLoss={false} />
             </span>
         );
