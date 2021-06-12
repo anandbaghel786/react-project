@@ -20,3 +20,10 @@
   .btn:hover {
     color: #4993dc;
   }
+
+  .react-datepicker__input-container input{
+    height: 38px;
+    border: 1px solid lightgray;
+    padding-left: 1rem;
+    border-radius: 5px;
+  }

@@ -8,6 +8,10 @@ import dataService from '../_services/_dataService';
 import apiService from '../api/Api.service';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ImageUploader from 'react-images-upload';
+import { Skills } from './Skills';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const skill = {
     id: 1,
@@ -20,29 +24,40 @@ class Welcome extends Component {
         super();
         this.state = {
             data: [],
-            formData: { localId: 100, _id: '', sqlId: 0, name: "", email: "", age: "", gender: '', skills: [{ ...skill }] }, errors: { name: '', email: '', age: '', gender: '' },
+            formData: { localId: 100, _id: '', sqlId: 0, name: '', email: "", age: '', gender: '', dob: new Date(), skills: [{ ...skill }] }, errors: { name: '', email: '', age: '', gender: '' },
             index: null,
             skillIndex: null,
-            isEditMode: false
+            isEditMode: false,
+            pictures: []
         };
         this.onChange = this.onChange.bind(this)
         this.setValue = this.setValue.bind(this);
+        this.onDrop = this.onDrop.bind(this);
+    }
+
+    onDrop(picture) {
+        
+        this.setState({
+            pictures: picture[picture.length-1],
+        });
     }
 
     componentDidMount() {
 
+        // apiService.httpGet("/getMyname", this.state.formData).then(res => {                
+        //     toast.success(res);
+        // });
         this.getUsers();
 
         this.subscription = dataService.getDatasource().subscribe(message => {
             if (message) {
-                console.log(message.datasource);
+                // console.log(message.datasource);
             }
         });
     }
 
     getUsers = () => {
         apiService.httpGet("/users").then(res => {
-            console.log(res);
             this.setState({
                 data: res.data && res.data.length > 0 ? res.data : []
             })
@@ -51,7 +66,7 @@ class Welcome extends Component {
 
 
     setValue = (e) => {
-        let field = e.target.name;
+        let field = e && e.target ? e.target.name : 'date';
         let index = 0;
         if (field.includes('skill') || field.includes('exp')) {
             index = field.includes('skill') ? field.slice(5) : field.slice(3);
@@ -80,6 +95,14 @@ class Welcome extends Component {
             case 'email':
                 this.setState({
                     formData: { ...this.state.formData, email: e.target.value }
+                })
+                break;
+
+            case 'date':               
+                this.setState({
+                    formData: { ...this.state.formData, dob: e }
+                }, () => {
+                    this.calculateAge(e);
                 })
                 break;
 
@@ -117,8 +140,30 @@ class Welcome extends Component {
     onChange(e) {
         const re = /^[0-9\b]+$/;
         if (e.target.value === '' || re.test(e.target.value)) {
-            this.setState({ age: e.target.value })
+            this.setState({
+                formData: { ...this.state.formData, age: e.target.value }
+            })
         }
+    }
+
+    calculateAge = async (dob) => {
+        var ageDifMs = Date.now() - new Date(dob).getTime();
+        var ageDate = new Date(ageDifMs);
+        let form = await this.getForm();
+        form.age = Math.abs(ageDate.getUTCFullYear() - 1970);
+        this.setState({
+            formData: {...this.state.formData, age: form.age}
+        });
+    }
+
+    getForm = () => {
+        let form = {...this.state.formData};
+        return form;
+    }
+
+    getSkills = () => {
+        let skills = [...this.state.formData.skills];
+        return skills;
     }
 
     validate = (e) => {
@@ -129,7 +174,14 @@ class Welcome extends Component {
         //     field = field.includes('skill') ? field.slice(0, 5) : field.slice(0, 3);
         // }
 
-        if (e.target.name === 'name') {
+        if(this.state.isEditMode) {
+            this.setState({
+                erros: { name: '', email: '', age: '', gender: '' }
+            })
+        }
+
+        let field = e && e.target ? e.target.name : 'date';
+        if (field === 'name') {
             if (e.target.value) {
                 this.setState(prevState => ({
                     errors: { ...prevState.errors, name: '' },
@@ -139,7 +191,7 @@ class Welcome extends Component {
                     errors: { ...prevState.errors, name: 'Name is required.' },
                 }));
             }
-        } else if (e.target.name === 'age') {
+        } else if (field === 'age') {
             if (e.target.value) {
                 this.setState(prevState => ({
                     errors: { ...prevState.errors, age: '' },
@@ -149,7 +201,7 @@ class Welcome extends Component {
                     errors: { ...prevState.errors, age: 'Age is required.' },
                 }));
             }
-        } else if (e.target.name === 'gender') {
+        } else if (field === 'gender') {
             if (e.target.value) {
                 this.setState(prevState => ({
                     errors: { ...prevState.errors, gender: '' },
@@ -159,15 +211,20 @@ class Welcome extends Component {
                     errors: { ...prevState.errors, gender: 'Gender is required.' },
                 }));
             }
-        } else if (e.target.name === 'email') {
-            if (e.target.value) {
+        } else if (field === 'email') {
+            const email = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+            if (e.target.value && !email.test(e.target.value)) {
+                this.setState(prevState => ({
+                    errors: { ...prevState.errors, email: 'Email is not valid.' },
+                }));
+            } else if(e.target.value && email.test(e.target.value)) {
                 this.setState(prevState => ({
                     errors: { ...prevState.errors, email: '' },
                 }));
             } else {
                 this.setState(prevState => ({
                     errors: { ...prevState.errors, email: 'Email is required.' },
-                }));
+                })); 
             }
         }
         // else if (e.target.name === 'skill') {
@@ -211,7 +268,6 @@ class Welcome extends Component {
         } else {
             var add = { ...this.state.formData };
             // add.localId = this.state.data[this.state.data.length-1].localId+1;
-            console.log();
             this.setState({ add });
             this.state.data.push(Object.assign({}, add));
         }
@@ -220,13 +276,12 @@ class Welcome extends Component {
             // let formData = {...this.state.formData}
             // formData._id = res.data._id;
             // this.setState({ formData });
-            console.log(this.state.formData);
             this.setState({
                 data: this.state.data
             }, () => {
                 localStorage.setItem("data", JSON.stringify(this.state.data));
             })
-    
+
             toast.success("User saved successfully.");
         });
 
@@ -238,18 +293,13 @@ class Welcome extends Component {
         //     formData: this.state.data[index],
         //     index: index,
         //     isEditMode: true
-        // }, () => {
-        //     console.log(this.state.formData);
         // })
 
         //By item _id from html
-        console.log(item);
         this.setState({
-            formData: {...item},
+            formData: { ...item },
             index: index,
             isEditMode: true
-        }, () => {
-            console.log(this.state.formData);
         })
 
         this.validate(evt)
@@ -260,9 +310,7 @@ class Welcome extends Component {
         localStorage.setItem("data", JSON.stringify(this.state.data));
         this.setState({ data: this.state.data });
         apiService.httpDelete("/users/deleteUser").then(async (res) => {
-            console.log(res);
             let result = res;
-            console.log(res);
             let dat = await this.getUsers();
             // this.setState({
             //     data: result.data
@@ -276,13 +324,39 @@ class Welcome extends Component {
         })
     }
 
+    setUserSkills = (skills) => {
+        if(skills.length > 0) {
+            let form = { ...this.state.formData };
+            form.skills = skills;
+            this.setState({
+                formData: form
+            })
+        }
+    }
+
     render() {
         return <div>
-
             <Container fluid>
                 <Row>
                     <Col style={{ padding: '1rem', border: "2px solid grey" }}>
                         <Form>
+                            <Row>
+                                <Col>
+                                    <Form.Group controlId="upldImg">
+                                            <ImageUploader
+                                                singleImage={true}
+                                                withIcon={false}
+                                                withPreview={true}
+                                                label=""
+                                                buttonText="Upload Images"
+                                                onChange={this.onDrop}
+                                                imgExtension={[".jpg", ".jpeg", ".gif", ".png", ".gif", ".svg"]}
+                                                maxFileSize={1048576}
+                                                fileSizeError=" file size is too big"
+                                            />
+                                    </Form.Group>
+                                </Col>
+                            </Row>
                             <Row>
                                 <Col>
                                     <Form.Group controlId="name">
@@ -290,14 +364,22 @@ class Welcome extends Component {
                                         <Form.Control type="text" name="name" value={this.state.formData.name} placeholder="Enter name" onChange={this.setValue}></Form.Control>
                                         {this.state.errors["name"] ? <span style={{ color: "red" }}>{this.state.errors["name"]}</span> : null}
                                     </Form.Group>
+                                </Col>                              
+                                <Col>
+                                    <Form.Group controlId="dob">
+                                        <Form.Label>Date of birth</Form.Label>
+                                        <DatePicker dateFormat="dd/MM/yyyy" isClearable selected={this.state.formData.dob} placeholder="Enter dob"  onChange={(date) => this.setValue(date)} />
+                                        {/* <Form.Control name="dob" type="text" value={this.state.formData.dob}  onChange={this.onChange} placeholder="Enter dob"></Form.Control> */}
+                                        {/* {this.state.errors["dob"] ? <span style={{ color: "red" }}>{this.state.errors["dob"]}</span> : null} */}
+                                    </Form.Group>
                                 </Col>
                                 <Col>
                                     <Form.Group controlId="age">
                                         <Form.Label>Age</Form.Label>
-                                        <Form.Control name="age" minLength="2" maxLength="2" type="text" value={this.state.formData.age} onChange={this.onChange, this.setValue} placeholder="Enter age"></Form.Control>
+                                        <Form.Control name="age" minLength="2" maxLength="2" type="text" value={this.state.formData.age}  onChange={this.onChange} placeholder="Enter age"></Form.Control>
                                         {this.state.errors["age"] ? <span style={{ color: "red" }}>{this.state.errors["age"]}</span> : null}
                                     </Form.Group>
-                                </Col>
+                                </Col>  
                             </Row>
                             <Row>
                                 <Col>
@@ -319,6 +401,7 @@ class Welcome extends Component {
                                     </Form.Group>
                                 </Col>
                             </Row>
+                            <Skills setUserSkills={this.setUserSkills} form={this.state.formData} />
                             <Row>
                                 <Col style={{ padding: '24px', border: '3px solid #e2e2f1', margin: '14px' }}>
                                     <Form.Label style={{ fontWeight: 'bold', textDecoration: 'underline' }}>Add Skill:</Form.Label>
@@ -331,7 +414,11 @@ class Welcome extends Component {
                                                         <Form.Control as="select" type="exskillp" id={"skill" + index1} name={"skill" + index1} value={skill.skill} placeholder="Enter skill" onChange={this.setValue} onFocus={(e) => this.getSkillRowIndex(e, index1)}>
                                                             <option value="">Select</option>
                                                             <option value="angular">Angular</option>
-                                                            <option value="javascript">Javascript</option>
+                                                            <option value="angularjs">AngularJS </option>
+                                                            <option value="node JS">Node JS</option>
+                                                            <option value="javascript">Java Script</option>
+                                                            <option value="java">Java</option>
+                                                            <option value="bigData">Big Data</option>
                                                         </Form.Control>
                                                         {this.state.errors["skill"] && index1 == this.state.skillIndex ? <span style={{ color: "red" }}>{this.state.errors["skill"]}</span> : null}
                                                     </Form.Group>
@@ -347,8 +434,6 @@ class Welcome extends Component {
                                                     {this.state.formData.skills.length > 1 ? <button type="button" className="btn btn-circle" onClick={this.removeItem}><i className="fas fa-minus"></i></button> : null}
 
                                                     {this.state.formData.skills.length - 1 <= index1 ? <button type="button" className="btn btn-circle ml-2" onClick={this.addItem}><i className="fas fa-plus"></i></button> : null}
-
-                                                    {/* <FontAwesomeIcon icon={faHome} /> */}
                                                 </Col>
                                             </Row>
                                         )
@@ -376,7 +461,7 @@ class Welcome extends Component {
                                 </tr>
                             </thead>
                             <tbody>
-                                {this.state.data?.map((e, index) =>
+                                {this.state.data?.map(({ ...e }, index) =>
                                     <tr key={index}>
                                         <td>{e.name}</td>
                                         <td>{e.age}</td>
