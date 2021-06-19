@@ -92,7 +92,8 @@ export const Skills = (props) => {
             <Modal.Body>
                 <Row>
                     <Col style={{ padding: '0 66px 0px 26px' }}>
-                        <Form.Label style={{ fontWeight: 'bold', textDecoration: 'underline' }}>{userName.charAt(0).toUpperCase() + userName.slice(1)}'s skills:</Form.Label>
+                        <Form.Label style={{ fontWeight: 'bold', textDecoration: 'underline' }}>
+                            <span style={{color: '#ff4fa0'}}>{userName.charAt(0).toUpperCase() + userName.slice(1)}'s</span> skills:</Form.Label>
                         {skillList.map((skill, index1) => {
                             return (
                                 <Row key={index1}>
@@ -103,7 +104,7 @@ export const Skills = (props) => {
                                                 <option value="">Select</option>
                                                 <option value="angular">Angular</option>
                                                 <option value="angularjs">AngularJS </option>
-                                                <option value="node JS">Node JS</option>
+                                                <option value="nodejs">Node JS</option>
                                                 <option value="javascript">Java Script</option>
                                                 <option value="java">Java</option>
                                                 <option value="bigData">Big Data</option>

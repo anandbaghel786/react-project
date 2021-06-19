@@ -24,7 +24,7 @@ class Welcome extends Component {
         super();
         this.state = {
             data: [],
-            formData: { localId: 100, _id: '', sqlId: 0, name: '', email: "", age: '', gender: '', dob: new Date(), skills: [{ ...skill }] }, errors: { name: '', email: '', age: '', gender: '' },
+            formData: { localId: 100, _id: '', sqlId: 0, name: '', email: "", age: 0, gender: '', dob: new Date(), profileImgUrl: 'https://glossophs.sa.edu.au/wp-content/uploads/2018/09/placeholder-profile-sq-300x300.jpg', skills: [{ ...skill }] }, errors: { name: '', email: '', age: '', gender: '' },
             index: null,
             skillIndex: null,
             isEditMode: false,
@@ -36,10 +36,26 @@ class Welcome extends Component {
     }
 
     onDrop(picture) {
-        
-        this.setState({
-            pictures: picture[picture.length-1],
-        });
+        console.log(picture);
+        let file = picture[picture.length - 1];
+        let reader = new FileReader();
+        let base64String = '';
+        if (picture.length > 0) {
+            let form = { ...this.state.formData };
+            reader.onload = () => {
+                base64String = reader.result;                
+                form.profileImgUrl = base64String;
+                // console.log(base64String);
+                this.setState({
+                    formData: { ...this.state.formData, profileImgUrl: form.profileImgUrl },
+                },
+                    console.log(this.state.formData.profileImgUrl));
+            }
+            reader.readAsDataURL(file);
+            this.setState({
+                formData: { ...this.state.formData, profileImgUrl: form.profileImgUrl },
+            });
+        }
     }
 
     componentDidMount() {
@@ -98,7 +114,8 @@ class Welcome extends Component {
                 })
                 break;
 
-            case 'date':               
+            case 'date':
+                console.log(new Date(e));
                 this.setState({
                     formData: { ...this.state.formData, dob: e }
                 }, () => {
@@ -150,14 +167,14 @@ class Welcome extends Component {
         var ageDifMs = Date.now() - new Date(dob).getTime();
         var ageDate = new Date(ageDifMs);
         let form = await this.getForm();
-        form.age = Math.abs(ageDate.getUTCFullYear() - 1970);
+        form.age = dob ? Math.abs(ageDate.getUTCFullYear() - 1970) : 0;
         this.setState({
-            formData: {...this.state.formData, age: form.age}
+            formData: { ...this.state.formData, age: form.age }
         });
     }
 
     getForm = () => {
-        let form = {...this.state.formData};
+        let form = { ...this.state.formData };
         return form;
     }
 
@@ -174,7 +191,7 @@ class Welcome extends Component {
         //     field = field.includes('skill') ? field.slice(0, 5) : field.slice(0, 3);
         // }
 
-        if(this.state.isEditMode) {
+        if (this.state.isEditMode) {
             this.setState({
                 erros: { name: '', email: '', age: '', gender: '' }
             })
@@ -217,14 +234,14 @@ class Welcome extends Component {
                 this.setState(prevState => ({
                     errors: { ...prevState.errors, email: 'Email is not valid.' },
                 }));
-            } else if(e.target.value && email.test(e.target.value)) {
+            } else if (e.target.value && email.test(e.target.value)) {
                 this.setState(prevState => ({
                     errors: { ...prevState.errors, email: '' },
                 }));
             } else {
                 this.setState(prevState => ({
                     errors: { ...prevState.errors, email: 'Email is required.' },
-                })); 
+                }));
             }
         }
         // else if (e.target.name === 'skill') {
@@ -255,47 +272,42 @@ class Welcome extends Component {
     }
 
     submit = (e, index) => {
-        let obj = this.state.data.find(e => e.localId === this.state.formData.localId);
 
-        if (obj) {
-            var mydata = this.state.data;
-            mydata[this.state.index] = this.state.formData;
-            this.setState({
-                data: mydata
-            }, () => {
-                localStorage.setItem("data", JSON.stringify(this.state.data));
-            })
-        } else {
-            var add = { ...this.state.formData };
-            // add.localId = this.state.data[this.state.data.length-1].localId+1;
-            this.setState({ add });
-            this.state.data.push(Object.assign({}, add));
-        }
-
+        // this.state.formData.age = null;
         apiService.httpPost("/users/saveUser", this.state.formData).then(res => {
-            // let formData = {...this.state.formData}
-            // formData._id = res.data._id;
-            // this.setState({ formData });
-            this.setState({
-                data: this.state.data
-            }, () => {
-                localStorage.setItem("data", JSON.stringify(this.state.data));
-            })
+
+            // let obj = this.state.data.find(e => e.localId === this.state.formData.localId);
+
+            // if (obj) {
+            //     var mydata = this.state.data;
+            //     mydata[this.state.index] = this.state.formData;
+            //     this.setState({
+            //         data: mydata
+            //     }, () => {
+            //         localStorage.setItem("data", JSON.stringify(this.state.data));
+            //     })
+            // } else {
+            //     var add = { ...this.state.formData };
+            //     this.setState({ add });
+            //     this.state.data.push(Object.assign({}, add));
+            // }
+            // this.setState({
+            //     data: this.state.data
+            // }, () => {
+            //     localStorage.setItem("data", JSON.stringify(this.state.data));
+            // })
+            this.getUsers();
 
             toast.success("User saved successfully.");
-        });
+        })
+            .catch(err => {
+                toast.error("Unable to save user!");
+            });
 
     }
 
     editData = (evt, item, index) => {
-        // By localstorage
-        // this.setState({
-        //     formData: this.state.data[index],
-        //     index: index,
-        //     isEditMode: true
-        // })
-
-        //By item _id from html
+        item.dob = new Date(item.dob);
         this.setState({
             formData: { ...item },
             index: index,
@@ -315,7 +327,11 @@ class Welcome extends Component {
             // this.setState({
             //     data: result.data
             // })
+            toast.success("User deleted successfully.");
         })
+            .catch(err => {
+                toast.error("Unable to delete user!");
+            });
     }
 
     getSkillRowIndex = (e, i) => {
@@ -325,13 +341,17 @@ class Welcome extends Component {
     }
 
     setUserSkills = (skills) => {
-        if(skills.length > 0) {
+        if (skills.length > 0) {
             let form = { ...this.state.formData };
             form.skills = skills;
             this.setState({
                 formData: form
             })
         }
+    }
+
+    componentWillReceiveProps(nextProps) {
+        console.log(nextProps);
     }
 
     render() {
@@ -341,19 +361,23 @@ class Welcome extends Component {
                     <Col style={{ padding: '1rem', border: "2px solid grey" }}>
                         <Form>
                             <Row>
+                                <Col className="d-flex justify-content-center">
+                                    <img src={this.state.formData.profileImgUrl} alt="profileImage" width="100" height="100" />
+                                </Col>
+                            </Row>
+                            <Row>
                                 <Col>
                                     <Form.Group controlId="upldImg">
-                                            <ImageUploader
-                                                singleImage={true}
-                                                withIcon={false}
-                                                withPreview={true}
-                                                label=""
-                                                buttonText="Upload Images"
-                                                onChange={this.onDrop}
-                                                imgExtension={[".jpg", ".jpeg", ".gif", ".png", ".gif", ".svg"]}
-                                                maxFileSize={1048576}
-                                                fileSizeError=" file size is too big"
-                                            />
+                                        <ImageUploader
+                                            singleImage={true}
+                                            withIcon={false}
+                                            label=""
+                                            buttonText="Choose your photo"
+                                            onChange={this.onDrop}
+                                            imgExtension={[".jpg", ".jpeg", ".gif", ".png", ".gif", ".svg"]}
+                                            maxFileSize={1048576}
+                                            fileSizeError=" file size is too big"
+                                        />
                                     </Form.Group>
                                 </Col>
                             </Row>
@@ -364,11 +388,11 @@ class Welcome extends Component {
                                         <Form.Control type="text" name="name" value={this.state.formData.name} placeholder="Enter name" onChange={this.setValue}></Form.Control>
                                         {this.state.errors["name"] ? <span style={{ color: "red" }}>{this.state.errors["name"]}</span> : null}
                                     </Form.Group>
-                                </Col>                              
+                                </Col>
                                 <Col>
                                     <Form.Group controlId="dob">
                                         <Form.Label>Date of birth</Form.Label>
-                                        <DatePicker dateFormat="dd/MM/yyyy" isClearable selected={this.state.formData.dob} placeholder="Enter dob"  onChange={(date) => this.setValue(date)} />
+                                        <DatePicker dateFormat="dd/MM/yyyy" maxDate={new Date()} isClearable selected={this.state.formData.dob} placeholder="Enter dob" onChange={(date) => this.setValue(date)} />
                                         {/* <Form.Control name="dob" type="text" value={this.state.formData.dob}  onChange={this.onChange} placeholder="Enter dob"></Form.Control> */}
                                         {/* {this.state.errors["dob"] ? <span style={{ color: "red" }}>{this.state.errors["dob"]}</span> : null} */}
                                     </Form.Group>
@@ -376,10 +400,10 @@ class Welcome extends Component {
                                 <Col>
                                     <Form.Group controlId="age">
                                         <Form.Label>Age</Form.Label>
-                                        <Form.Control name="age" minLength="2" maxLength="2" type="text" value={this.state.formData.age}  onChange={this.onChange} placeholder="Enter age"></Form.Control>
+                                        <Form.Control name="age" minLength="2" maxLength="2" type="text" value={this.state.formData.age} onChange={this.onChange} placeholder="Enter age"></Form.Control>
                                         {this.state.errors["age"] ? <span style={{ color: "red" }}>{this.state.errors["age"]}</span> : null}
                                     </Form.Group>
-                                </Col>  
+                                </Col>
                             </Row>
                             <Row>
                                 <Col>
@@ -415,7 +439,7 @@ class Welcome extends Component {
                                                             <option value="">Select</option>
                                                             <option value="angular">Angular</option>
                                                             <option value="angularjs">AngularJS </option>
-                                                            <option value="node JS">Node JS</option>
+                                                            <option value="nodejs">Node JS</option>
                                                             <option value="javascript">Java Script</option>
                                                             <option value="java">Java</option>
                                                             <option value="bigData">Big Data</option>
