@@ -43,19 +43,38 @@ class Welcome extends Component {
         if (picture.length > 0) {
             let form = { ...this.state.formData };
             reader.onload = () => {
-                base64String = reader.result;                
+                base64String = reader.result;
                 form.profileImgUrl = base64String;
-                // console.log(base64String);
-                this.setState({
-                    formData: { ...this.state.formData, profileImgUrl: form.profileImgUrl },
-                },
-                    console.log(this.state.formData.profileImgUrl));
+                let formData = new FormData();
+                formData.append('image', this.b64toBlob(form.profileImgUrl));
+                apiService.httpPost("/users/uploadImage", formData, {isMultipartFormData: true}).then(res => {
+                    console.log(res);
+                    this.setState({
+                        formData: { ...this.state.formData, profileImgUrl: res.url },
+                    })
+                })
             }
             reader.readAsDataURL(file);
             this.setState({
                 formData: { ...this.state.formData, profileImgUrl: form.profileImgUrl },
             });
         }
+    }
+
+    b64toBlob(dataURI) {
+        var byteString; 
+        if (dataURI.split(',')[0].indexOf('base64') >= 0) 
+        byteString = atob(dataURI.split(',')[1]); 
+        else 
+        byteString = unescape(dataURI.split(',')[1]);
+        // separate out the mime component    
+        var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+        // write the bytes of the string to a typed array    
+        var ia = new Uint8Array(byteString.length);    
+        for (var i = 0; i < byteString.length; i++) {      
+            ia[i] = byteString.charCodeAt(i);    
+        }
+        return new Blob([ia], { type: mimeString });
     }
 
     componentDidMount() {
@@ -298,7 +317,7 @@ class Welcome extends Component {
             // })
             this.getUsers();
 
-            toast.success("User saved successfully.");
+            toast.success(`User ${this.state.isEditMode ? 'updated' : 'saved'} successfully.`);
         })
             .catch(err => {
                 toast.error("Unable to save user!");
@@ -306,8 +325,18 @@ class Welcome extends Component {
 
     }
 
+    deleteUserSkills = (evt) => {
+        apiService.httpDelete("/deleteUserSkills").then(res => {
+            toast.success(res.status);
+        });
+    }
+
     editData = (evt, item, index) => {
         item.dob = new Date(item.dob);
+        if (item.skills.length == 0) {
+            item.skills = [skill];
+        }
+        console.log(item);
         this.setState({
             formData: { ...item },
             index: index,
@@ -318,10 +347,11 @@ class Welcome extends Component {
     }
 
     removeRow = (id) => {
-        this.state.data.splice(id, 1);
-        localStorage.setItem("data", JSON.stringify(this.state.data));
-        this.setState({ data: this.state.data });
-        apiService.httpDelete("/users/deleteUser").then(async (res) => {
+        console.log(this.state.data[id]);
+        let data = [...this.state.data];
+        data.splice(id, 1);
+        this.setState({ data: data });
+        apiService.httpDelete("/users/deleteUser", this.state.data[id]).then(async (res) => {
             let result = res;
             let dat = await this.getUsers();
             // this.setState({
@@ -469,6 +499,9 @@ class Welcome extends Component {
                                 <Col>
                                     <button type="button" onClick={(e) => this.submit(e)} className="btn btn-primary"> {this.state.isEditMode ? 'Update' : 'Submit'}</button>
                                 </Col>
+                                <Col>
+                                    <button type="button" onClick={(e) => this.deleteUserSkills(e)} className="btn btn-primary">Delete user and skills</button>
+                                </Col>
                             </Row>
                         </Form>
                     </Col>
@@ -492,8 +525,8 @@ class Welcome extends Component {
                                         <td>{e.gender}</td>
                                         <td>{e.email}</td>
                                         <td>
-                                            {e.skills?.map((e1, index) =>
-                                                <span key={index}>{e1.skill}  {e1.exp} <br></br></span>
+                                            {e.skills?.map((e1, index1) =>
+                                                <span key={index1}>{e1.skill}  {e1.exp} <br></br></span>
                                             )}
                                         </td>
                                         <td>

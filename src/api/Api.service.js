@@ -16,18 +16,32 @@ const apiService = {
           throw Error(error); 
         });
     },
-    httpPost: async (endpoint, data) => {
-      return fetch(`${apiService.config.api}${endpoint}`, {
-        method: "post",
-        body: data ? JSON.stringify(data) : null,
-        headers: header()
-      })
-        .then(response => handleResponse(response))
-        .then(response => response)
-        .catch(error => {
-          console.error(error);
-          throw Error(error);
-        });
+    httpPost: async (endpoint, data, isMultipartFormData) => {
+      if(!isMultipartFormData) {
+        return fetch(`${apiService.config.api}${endpoint}`, {
+          method: "post",
+          body: data ? JSON.stringify(data) : null,
+          headers: header()
+        })
+          .then(response => handleResponse(response))
+          .then(response => response)
+          .catch(error => {
+            console.error(error);
+            throw Error(error);
+          });
+      } else {
+        console.log('ddddddddd');
+        return fetch(`${apiService.config.api}${endpoint}`, {
+          method: "post",
+          body: data
+        })
+          .then(response => handleResponse(response))
+          .then(response => response)
+          .catch(error => {
+            console.error(error);
+            throw Error(error);
+          });
+      }
     },
     httpPut: async (endpoint, data) => {
       return fetch(`${apiService.config.api}${endpoint}`, {
@@ -45,6 +59,7 @@ const apiService = {
     httpDelete: async (endpoint, data) => {
       return fetch(`${apiService.config.api}${endpoint}`, {
         method: "delete",
+        body: data ? JSON.stringify(data) : null,
         headers: header()
       })
         .then(response => handleResponse(response))
