@@ -15,6 +15,11 @@ import { BrowserRouter as Router, Route, NavLink } from "react-router-dom";
 function App() {
   const handleToggle = () => { }
   const props = { name: "Harish" };
+  let dbStatus = true;
+  const onDbChange = (e) => {
+    console.log(e)
+    dbStatus = e;
+  }
   return (
     <div className="App">
       {/* <Greet /> */}
@@ -35,7 +40,7 @@ function App() {
               <li>
                 <NavLink exact to={{ pathname: "/welcome", state: { isAdmin: true } }} activeStyle={{ color: 'white', padding: '5px', background: 'black', borderRadius: '10%' }}>Welcome</NavLink>
               </li>
-              <Hello />
+              <Hello onDbChange={onDbChange}  />
             </ul>
           </nav>
 
@@ -47,7 +52,7 @@ function App() {
               <Greet objName={props.name} bool={true} handle={() => handleToggle()} />
             </Route>
             <Route path="/welcome">
-              <Welcome />
+              <Welcome dbStatus1={dbStatus} />
             </Route>
             <Route exact path="/">
               <Home />

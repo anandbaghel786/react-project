@@ -23,6 +23,7 @@ class Hello extends Component {
         }, () => {
             dataService.setDatasource(checked);
             apiService.httpGet(`/db/${dataService.getDb()}`);
+            this.props.onDbChange(this.state.checked);
             toast.success(this.state.checked ? "MongoDB selected as database." : "MySQL selected as database.");
         });
     }
@@ -32,7 +33,7 @@ class Hello extends Component {
             <span className="switch-pos">
                 <label className="mr-2" style={{ fontWeight: this.state.checked ? null : 'bold' }}>MySQL will be available as DB in future</label>
                 <label>
-                    <Switch disabled onChange={this.handleChange} checked={this.state.checked} uncheckedIcon={false}
+                    <Switch onChange={this.handleChange} checked={this.state.checked} uncheckedIcon={false}
                         checkedIcon={false} />
                 </label>
                 <label className="ml-1" style={{ fontWeight: this.state.checked ? 'bold' : null }}>Mongo is running as DB by default in backend.</label>

@@ -5,7 +5,6 @@ let dbSource = true;
 const dataService = {
     setDatasource: datasource => {
         dbSource = datasource;
-        console.log(dbSource);
         subject.next({ datasource: datasource })
     },
     clearMessages: () => subject.next(),

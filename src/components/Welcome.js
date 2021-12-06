@@ -12,31 +12,121 @@ import ImageUploader from 'react-images-upload';
 import { Skills } from './Skills';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-model';
+import { AgGridColumn, AgGridReact } from "@ag-grid-community/react";
+import { AllModules } from "@ag-grid-enterprise/all-modules";
+import { AllCommunityModules } from "@ag-grid-community/all-modules"
+import '@ag-grid-community/core/dist/styles/ag-grid.css';
+import '@ag-grid-community/core/dist/styles/ag-theme-alpine.css';
+import 'ag-grid-enterprise';
+import { Grid } from 'ag-grid-community';
+
+import 'ag-grid-community/dist/styles/ag-grid.css';
+import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
+// import { AgGridColumn, AgGridReact } from 'ag-grid-react';
+// import 'ag-grid-community/dist/styles/ag-grid.css';
+// import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
 
 const skill = {
-    id: 1,
+    id: 0,
     skill: '',
     exp: ''
 }
 
 class Welcome extends Component {
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
+
         this.state = {
+            dbStatus1: true,
             data: [],
-            formData: { localId: 100, _id: '', sqlId: 0, name: '', email: "", age: 0, gender: '', dob: new Date(), profileImgUrl: 'https://glossophs.sa.edu.au/wp-content/uploads/2018/09/placeholder-profile-sq-300x300.jpg', skills: [{ ...skill }] }, errors: { name: '', email: '', age: '', gender: '' },
+            formData: { name: '', email: "", age: 18, gender: '', dob: new Date().setFullYear(new Date().getFullYear() - 18), profileImgUrl: 'https://glossophs.sa.edu.au/wp-content/uploads/2018/09/placeholder-profile-sq-300x300.jpg', skills: [{ ...skill }] }, errors: { name: '', email: '', age: '', gender: '' },
             index: null,
             skillIndex: null,
             isEditMode: false,
-            pictures: []
+            pictures: [],
+            columnDefs: [
+                { headerName: 'Name', colId: 'name', field: 'name', sortable: true, filter: true, checkboxSelection: true, headerCheckboxSelection: true },
+                { headerName: 'Age', colId: 'age', field: 'age', sortable: true, filter: true },
+                { headerName: 'Gender', colId: 'gender', field: 'gender', valueGetter: this.genderValueGetter, sortable: true, filter: true },
+                { headerName: 'Email', colId: 'email', field: 'email', tooltipField: 'email', sortable: true, filter: true },
+                { headerName: 'Skills', colId: 'skills', field: 'skills', valueGetter: this.skillsValueGetter, sortable: true, filter: true },
+                { headerName: 'Action', colId: 'action', field: 'action' }
+            ],
+            rowData: [
+                { name: 'Zubrato', age: 34, gender: 'male', email: 'zubrato@gmail.com', skills: 'angular 3', action: '' },
+                { name: 'Cubrato', age: 34, gender: 'male', email: 'cubrato@gmail.com', skills: 'angular 3', action: '' },
+                { name: 'Mubrato', age: 34, gender: 'male', email: 'mubrato@gmail.com', skills: 'angular 3', action: '' }
+            ],
+            modules: [ClientSideRowModelModule]
         };
         this.onChange = this.onChange.bind(this)
         this.setValue = this.setValue.bind(this);
         this.onDrop = this.onDrop.bind(this);
     }
 
+    genderValueGetter = function (params) {
+        let gender = params.data.gender.toString();
+        return gender.charAt(0).toUpperCase() + gender.slice(1);
+    };
+
+    skillsValueGetter = function (params) {
+        let skills = [];
+        skills = params.data.skills;
+        let myskills = "";
+        if (typeof skills != 'string') {
+            skills.forEach(e => {
+                myskills = myskills + e.skill.charAt(0).toUpperCase() + e.skill.slice(1) + " " + e.exp + "\n";
+            })
+            return myskills;
+        }
+    };
+
+    onGridReady = (params) => {
+        this.gridApi = params.api;
+        this.gridColumnApi = params.columnApi;
+        // this.gridApi.sizeColumnsToFit();
+        try {
+            // (params.api).context.beanWrappers.tooltipManager.beanInstance.MOUSEOVER_SHOW_TOOLTIP_TIMEOUT = 0;
+        } catch (e) {
+            console.error(e);
+        }
+        var cols = params.columnApi.getAllColumns();
+        cols.forEach(function (col) {
+            var colDef = col.getUserProvidedColDef();
+            //     colDef.headerName + ', Column ID = ' + col.getId(),
+            //     JSON.stringify(colDef)
+            // );
+        });
+    };
+
+    onSelectionChanged = () => {
+        var selectedRows = this.gridApi.getSelectedRows();
+    };
+
+    getContextMenuItems = (params) => {
+        var result = [
+            {
+                name: 'Windows',
+                shortcut: 'Alt + W',
+                action: function () {
+                },
+                icon:
+                    '<img src="https://www.ag-grid.com/example-assets/skills/windows.png" />',
+            },
+            'separator',
+            {
+                name: 'Windows',
+                shortcut: 'Alt + W',
+                action: function () {
+                },
+                icon:
+                    '<img src="https://www.ag-grid.com/example-assets/skills/windows.png" />',
+            }
+        ]
+    };
+
     onDrop(picture) {
-        console.log(picture);
         let file = picture[picture.length - 1];
         let reader = new FileReader();
         let base64String = '';
@@ -47,11 +137,10 @@ class Welcome extends Component {
                 form.profileImgUrl = base64String;
                 let formData = new FormData();
                 formData.append('image', this.b64toBlob(form.profileImgUrl));
-                apiService.httpPost("/users/uploadImage", formData, {isMultipartFormData: true}).then(res => {
-                    console.log(res);
+                apiService.httpPost("/users/uploadImage", formData, { isMultipartFormData: true }).then(res => {
                     this.setState({
                         formData: { ...this.state.formData, profileImgUrl: res.url },
-                    })
+                    }, () => toast.success('Profile image uploaded successfully.'))
                 })
             }
             reader.readAsDataURL(file);
@@ -62,17 +151,17 @@ class Welcome extends Component {
     }
 
     b64toBlob(dataURI) {
-        var byteString; 
-        if (dataURI.split(',')[0].indexOf('base64') >= 0) 
-        byteString = atob(dataURI.split(',')[1]); 
-        else 
-        byteString = unescape(dataURI.split(',')[1]);
+        var byteString;
+        if (dataURI.split(',')[0].indexOf('base64') >= 0)
+            byteString = atob(dataURI.split(',')[1]);
+        else
+            byteString = unescape(dataURI.split(',')[1]);
         // separate out the mime component    
-        var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+        var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
         // write the bytes of the string to a typed array    
-        var ia = new Uint8Array(byteString.length);    
-        for (var i = 0; i < byteString.length; i++) {      
-            ia[i] = byteString.charCodeAt(i);    
+        var ia = new Uint8Array(byteString.length);
+        for (var i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
         }
         return new Blob([ia], { type: mimeString });
     }
@@ -83,18 +172,20 @@ class Welcome extends Component {
         //     toast.success(res);
         // });
         this.getUsers();
-
         this.subscription = dataService.getDatasource().subscribe(message => {
             if (message) {
-                // console.log(message.datasource);
+                setTimeout(() => {
+                    this.getUsers();
+                });
             }
         });
     }
 
-    getUsers = () => {
-        apiService.httpGet("/users").then(res => {
+    getUsers = async () => {
+        await apiService.httpGet("/users").then(res => {
             this.setState({
-                data: res.data && res.data.length > 0 ? res.data : []
+                data: res.data && res.data.length > 0 ? res.data : [],
+                rowData: res.data && res.data.length > 0 ? res.data : []
             })
         })
     }
@@ -134,7 +225,6 @@ class Welcome extends Component {
                 break;
 
             case 'date':
-                console.log(new Date(e));
                 this.setState({
                     formData: { ...this.state.formData, dob: e }
                 }, () => {
@@ -145,7 +235,7 @@ class Welcome extends Component {
             case 'skill':
                 let skills = [...this.state.formData.skills];
                 skills[index].skill = e.target.value;
-
+                console.log(index, '---------', skills, '---------', skill);
                 var formData = { ...this.state.formData };
                 formData.skills[index] = skills[index];
                 this.setState({ formData })
@@ -277,51 +367,83 @@ class Welcome extends Component {
     }
 
     addItem = (e) => {
-        skill.localId = this.state.formData.skills[this.state.formData.skills.length - 1].localId++;
+        // skill.localId = this.state.formData.skills[this.state.formData.skills.length - 1].localId++;
+        const skills = [...this.state.formData.skills];
+        skills.push({ id: 0, skill: '', exp: '' });
         this.setState(prevState => ({
-            formData: { ...prevState.formData, skills: [...prevState.formData.skills, { ...skill }] },
-        }));
+            formData: { ...prevState.formData, skills: skills },
+        }), () => {
+        });
+
     }
 
-    removeItem = (e) => {
-        this.state.formData.skills.pop();
-        this.setState({
-            skills: [...this.state.formData.skills]
-        })
+    removeItem = (e, userId, skillId, index) => {
+        if (userId && skillId) {
+            apiService.httpGet(`/users/deleteSkill/${userId}/${skillId}`).then(res => {
+                const skills = this.state.formData.skills;
+                skills.splice(index, 1);
+                this.setState({ formData: { ...this.state.formData, skills: skills } })
+                // this.setState({
+                //     skills: [...this.state.formData.skills]
+                // })
+                this.getUsers();
+                toast.success("Skill deleted successfully.");
+            })
+                .catch(err => {
+                    console.log(err);
+                    toast.error("Unable to delete skill!");
+                });
+        } else {
+            const skills = this.state.formData.skills;
+            skills.splice(index, 1);
+            this.setState({ formData: { ...this.state.formData, skills: skills }, data: skills })
+        }
     }
 
     submit = (e, index) => {
 
         // this.state.formData.age = null;
-        apiService.httpPost("/users/saveUser", this.state.formData).then(res => {
+        const skills = [...this.state.formData.skills].filter(e => e.skill || e.exp);
+        this.setState(prevState => ({
+            formData: { ...prevState.formData, skills: skills },
+        }), () => {
+            apiService.httpPost("/users/saveUser", this.state.formData).then(res => {
 
-            // let obj = this.state.data.find(e => e.localId === this.state.formData.localId);
+                // let obj = this.state.data.find(e => e.localId === this.state.formData.localId);
 
-            // if (obj) {
-            //     var mydata = this.state.data;
-            //     mydata[this.state.index] = this.state.formData;
-            //     this.setState({
-            //         data: mydata
-            //     }, () => {
-            //         localStorage.setItem("data", JSON.stringify(this.state.data));
-            //     })
-            // } else {
-            //     var add = { ...this.state.formData };
-            //     this.setState({ add });
-            //     this.state.data.push(Object.assign({}, add));
-            // }
-            // this.setState({
-            //     data: this.state.data
-            // }, () => {
-            //     localStorage.setItem("data", JSON.stringify(this.state.data));
-            // })
-            this.getUsers();
-
-            toast.success(`User ${this.state.isEditMode ? 'updated' : 'saved'} successfully.`);
-        })
-            .catch(err => {
-                toast.error("Unable to save user!");
-            });
+                // if (obj) {
+                //     var mydata = this.state.data;
+                //     mydata[this.state.index] = this.state.formData;
+                //     this.setState({
+                //         data: mydata
+                //     }, () => {
+                //         localStorage.setItem("data", JSON.stringify(this.state.data));
+                //     })
+                // } else {
+                //     var add = { ...this.state.formData };
+                //     this.setState({ add });
+                //     this.state.data.push(Object.assign({}, add));
+                // }
+                // this.setState({
+                //     data: this.state.data
+                // }, () => {
+                //     localStorage.setItem("data", JSON.stringify(this.state.data));
+                // })
+                this.getUsers();
+                this.setState({
+                    formData: { name: '', email: "", age: 18, gender: '', dob: new Date().setFullYear(new Date().getFullYear() - 18), profileImgUrl: 'https://glossophs.sa.edu.au/wp-content/uploads/2018/09/placeholder-profile-sq-300x300.jpg', skills: [{ id: 0, skill: '', exp: '' }] }, errors: { name: '', email: '', age: '', gender: '' }
+                },
+                    () => {
+                    })
+                if(this.state.isEditMode) {
+                    this.state.isEditMode = false;
+                }
+                toast.success(`User ${this.state.isEditMode ? 'updated' : 'saved'} successfully.`);
+            })
+                .catch(err => {
+                    toast.error("Unable to save user!");
+                });
+        });
 
     }
 
@@ -336,7 +458,6 @@ class Welcome extends Component {
         if (item.skills.length == 0) {
             item.skills = [skill];
         }
-        console.log(item);
         this.setState({
             formData: { ...item },
             index: index,
@@ -347,7 +468,6 @@ class Welcome extends Component {
     }
 
     removeRow = (id) => {
-        console.log(this.state.data[id]);
         let data = [...this.state.data];
         data.splice(id, 1);
         this.setState({ data: data });
@@ -381,7 +501,8 @@ class Welcome extends Component {
     }
 
     componentWillReceiveProps(nextProps) {
-        console.log(nextProps);
+        if (nextProps.dbStatus1 !== this.state.dbStatus1) {
+        }
     }
 
     render() {
@@ -392,7 +513,7 @@ class Welcome extends Component {
                         <Form>
                             <Row>
                                 <Col className="d-flex justify-content-center">
-                                    <img src={this.state.formData.profileImgUrl} alt="profileImage" width="100" height="100" />
+                                    <img src={this.state.formData.profileImgUrl} alt="profileImage" width="100" height="100" style={{ borderRadius: '50px' }} />
                                 </Col>
                             </Row>
                             <Row>
@@ -485,7 +606,7 @@ class Welcome extends Component {
                                                     </Form.Group>
                                                 </Col>
                                                 <Col md={2} style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
-                                                    {this.state.formData.skills.length > 1 ? <button type="button" className="btn btn-circle" onClick={this.removeItem}><i className="fas fa-minus"></i></button> : null}
+                                                    {this.state.formData.skills.length > 1 ? <button type="button" className="btn btn-circle" onClick={(e) => this.removeItem(e, this.state.formData._id || this.state.formData.id, (skill._id && skill._id.length > 0 && skill._id) || (skill.id > 0 && skill.id), index1)}><i className="fas fa-minus"></i></button> : null}
 
                                                     {this.state.formData.skills.length - 1 <= index1 ? <button type="button" className="btn btn-circle ml-2" onClick={this.addItem}><i className="fas fa-plus"></i></button> : null}
                                                 </Col>
@@ -506,9 +627,29 @@ class Welcome extends Component {
                         </Form>
                     </Col>
                     <Col style={{ padding: '1rem', border: "2px solid grey" }}>
-                        <Table responsive variant="dark" style={{ borderRadius: '20px' }}>
-                            <thead style={{ background: 'rgb(38 115 118)', borderRadius: '20px !important' }}>
+                        {/* <div id="myGrid" style={{ height: '100%', width: '100%' }} className="ag-theme-alpine" >
+                            <AgGridReact rowSelection="multiple"
+                                columnDefs={this.state.columnDefs}
+                                rowData={this.state.rowData}
+                                onGridReady={this.onGridReady}
+                                modules={AllCommunityModules}
+                                groupSelectsChildren={true}
+                                onSelectionChanged={this.onSelectionChanged.bind(this)}
+                                autoGroupColumnDef={{
+                                    headerName: "Age",
+                                    field: "age",
+                                    cellRenderer: 'agGroupCellRenderer',
+                                    cellRendererParams: {
+                                        checkbox: true
+                                    }
+                                }}
+                                getContextMenuItems={this.getContextMenuItems}
+                            />
+                        </div> */}
+                        <Table responsive style={{ borderRadius: '20px' }}>
+                            <thead style={{ borderRadius: '20px !important' }}>
                                 <tr>
+                                    <th>#</th>
                                     <th>Name</th>
                                     <th>Age</th>
                                     <th>Gender</th>
@@ -520,6 +661,7 @@ class Welcome extends Component {
                             <tbody>
                                 {this.state.data?.map(({ ...e }, index) =>
                                     <tr key={index}>
+                                        <td>{index + 1}</td>
                                         <td>{e.name}</td>
                                         <td>{e.age}</td>
                                         <td>{e.gender}</td>
@@ -530,8 +672,8 @@ class Welcome extends Component {
                                             )}
                                         </td>
                                         <td>
-                                            <button type="button" style={{ color: 'white' }} className="btn" onClick={(evt) => this.editData(evt, e, index)}><i className="fas fa-edit"></i></button>
-                                            <button type="button" style={{ color: 'white' }} className="btn ml-2" onClick={() => this.removeRow(index)}><i className="fas fa-trash"></i></button>
+                                            <button type="button" className="btn" onClick={(evt) => this.editData(evt, e, index)}><i className="fas fa-edit"></i></button>
+                                            <button type="button" className="btn ml-2" onClick={() => this.removeRow(index)}><i className="fas fa-trash"></i></button>
                                         </td>
                                     </tr>
                                 )}
