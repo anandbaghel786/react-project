@@ -456,7 +456,7 @@ class Welcome extends Component {
     editData = (evt, item, index) => {
         item.dob = new Date(item.dob);
         if (item.skills.length == 0) {
-            item.skills = [skill];
+            item.skills = [{...skill}];
         }
         this.setState({
             formData: { ...item },

@@ -4,11 +4,17 @@ import Salelpartners from './a';
 import SalesChannels from './b';
 import { PageFlip } from 'page-flip';
 import './Greet.css';
+import { withRouter } from 'react-router-dom';
+import CakeContainer from './redux/cake/CakeContainer';
+import { Provider } from 'react-redux';
+import store from './redux/cake/CakeStore';
+
 // function Greet() {
 //     return <h1>Hello Anand</h1>
 // }
 
-export const Greet = (props) => {
+const Greet = (props) => {
+    console.log(props);
     console.log(SalesChannels.salespartners);
     let [bool, setBool] = useState(props.bool);
     let output = [];
@@ -42,10 +48,14 @@ export const Greet = (props) => {
         console.log(output);
     }
     return <>
-        <input type="text" value="103200, 215402" onChange={(e) => onChangeHanlder(e)} onBlur={(e) => filter(e)} />
-        <button type="button" style={{ background: bool ? 'red' : '#1f655b' }} className="btn btn-primary ml-2" value="hello!" onClick={(e) => clickHandle(e)}> {bool ? 'Change to Green' : 'Change to red'}</button>
+       
+        <h1>Welcome {props.match.params.name}</h1>
+        <button className='btn btn-success m-2' onClick={() => props.history.push("/welcome")}>Go to Welcome page</button>
+        <br />
+        <input type="text" value="103200, 215402" className='m-2' onChange={(e) => onChangeHanlder(e)} onBlur={(e) => filter(e)} />
+        <button type="button" style={{ background: bool ? 'red' : '#1f655b' }} className="btn btn-primary m-2" value="hello!" onClick={(e) => clickHandle(e)}> {bool ? 'Change to Green' : 'Change to red'}</button>
     </>
 
 }
 
-// export default Greet;
+export default withRouter(Greet);

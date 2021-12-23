@@ -39,7 +39,8 @@
 
 
 .switch-pos {
-  position: absolute;
-  left: 25rem;
+  /* position: absolute;
+  right: 8rem; */
+  margin-left: 1rem;
   display: flex;
 }
